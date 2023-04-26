@@ -1,0 +1,12 @@
+<% if (loggedIn) { %> <% if (user) { %>
+<p>You are logged in as <%= user.username %></p>
+<a href="/protected">Protected view</a>
+<br /><br />
+<a href="/logout">Logout</a>
+<% } else { %>
+<p>You are logged out.</p>
+<a href="/login">Login</a>
+<% } %> <% } else { %>
+<p>Welcome to the site.</p>
+<a href="/login">Login</a>
+<% } %>
