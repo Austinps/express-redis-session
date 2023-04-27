@@ -41,7 +41,7 @@
     <% if (loggedIn) { %>
     <div class="loggedIn">
       <% if (user) { %>
-      <p>You are logged in as <%= user.username %></p>
+      <p>You are logged in as <%= user.email %></p>
       <a href="/protected">Protected view</a>
       <a href="/logout">Logout</a>
       <% } else { %>

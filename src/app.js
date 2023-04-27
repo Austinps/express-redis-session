@@ -1,6 +1,7 @@
 import express from 'express';
 import session from 'express-session';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
 import 'firebase/database'; // Import additional Firebase services if needed
 import { initializeApp } from 'firebase/app';
 import {
@@ -37,6 +38,7 @@ export const auth = getAuth(firebaseApp);
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
 const { paths, viewEngine } = config;
 app.set('views', paths.views);
 app.set('view engine', viewEngine);
@@ -109,7 +111,7 @@ app.use(function (req, r_, next) {
 
 // Define validation schema
 const schema = Joi.object({
-  username: Joi.string().required(),
+  email: Joi.string().required(),
   password: Joi.string().required(),
 });
 // signup route
@@ -130,7 +132,7 @@ app.post('/signup', async (req, res) => {
     // The user is signed up
     console.log(userCredential.user);
     req.session.user = { email: userCredential.user.email };
-    res.redirect('/protected');
+    res.status(200).json({ message: 'User signed up successfully.' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error' });
@@ -139,9 +141,9 @@ app.post('/signup', async (req, res) => {
 
 // Route for logging in a user
 app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  const { error } = schema.validate(req.body);
-
+  const { error, value } = schema.validate(req.body);
+  const { email, password } = value;
+  console.log(email, password);
   if (error) {
     return res.status(400).send(error.details[0].message);
   }
@@ -206,12 +208,12 @@ app.post('/login', (req, res) => {
     return;
   }
   // Check user credentials
-  const { username, password } = value;
-  if (username === 'user' && password === 'pass') {
+  const { email, password } = value;
+  if (email === 'user@mail.com' && password === 'pass') {
     // Store user info in session
     // Store user data in session
-    req.session.user = { id: user.id, username: user.username };
-    res.redirect('/');
+    req.session.user = { id: user.id, email: user.email };
+    res.redirect('/protected');
   } else {
     res.send('Login failed');
   }
