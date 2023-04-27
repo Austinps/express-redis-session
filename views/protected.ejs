@@ -42,6 +42,8 @@
     <p><%= message %></p>
     <% } %>
     <p>Hello, <%= user.email %></p>
-    <a href="/logout">Logout</a>
+    <form action="/logout" method="POST">
+      <button type="submit">Logout</button>
+    </form>
   </body>
 </html>

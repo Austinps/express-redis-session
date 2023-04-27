@@ -2,38 +2,33 @@ import express from 'express';
 import session from 'express-session';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
-import 'firebase/database'; // Import additional Firebase services if needed
-import { initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from 'firebase/auth';
 
 import rateLimit from 'express-rate-limit';
-import Joi from 'joi';
+
 import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
 import { v4 as uuid } from 'uuid';
 import config from '../config/config.js';
+import {
+  handleForgottenPassword,
+  handleLogin,
+  handleLogout,
+  handleRegistration,
+} from './controllers/authController.js';
+import {
+  renderForgotPassword,
+  renderForgotPasswordSuccess,
+  renderHome,
+  renderLogin,
+  renderProtected,
+  renderRegistration,
+} from './controllers/viewController.js';
 dotenv.config();
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
 });
-
-const firebaseConfig = {
-  apiKey: process.env.API_KEY,
-  authDomain: process.env.AUTH_DOMAIN,
-  projectId: process.env.PROJECT_ID,
-  storageBucket: process.env.STORAGE_BUCKET,
-  messagingSenderId: process.env.MESSAGING_SENDER_ID,
-  appId: process.env.APP_ID,
-};
-
-const firebaseApp = initializeApp(firebaseConfig);
-export const auth = getAuth(firebaseApp);
 
 const app = express();
 app.use(express.json());
@@ -75,7 +70,7 @@ redisSubClient.on('message', (channel, message) => {
 // Initialize store.
 let redisStore = new RedisStore({
   client: redisClient,
-  prefix: 'express-session:',
+  prefix: 'express-session-redis:',
   ttl: 86400, // session will expire after 24 hours
 });
 
@@ -109,135 +104,18 @@ app.use(function (req, r_, next) {
   next();
 });
 
-// Define validation schema
-const schema = Joi.object({
-  email: Joi.string().required(),
-  password: Joi.string().required(),
-});
-// signup route
-app.get('/signup', (req, res) => {
-  res.render('signup');
-});
 
-// Route for creating a new user
-app.post('/signup', async (req, res) => {
-  const { email, password } = req.body;
+app.get('/forgot-password', renderForgotPassword);
 
-  try {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    // The user is signed up
-    console.log(userCredential.user);
-    req.session.user = { email: userCredential.user.email };
-    res.status(200).json({ message: 'User signed up successfully.' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error' });
-  }
-});
+app.get('/forgot-password-success', renderForgotPasswordSuccess);
+app.get('/signup', renderRegistration);
+app.get('/', renderHome);
+app.get('/login', renderLogin);
+app.get('/protected', renderProtected);
 
-// Route for logging in a user
-app.post('/login', async (req, res) => {
-  const { error, value } = schema.validate(req.body);
-  const { email, password } = value;
-  console.log(email, password);
-  if (error) {
-    return res.status(400).send(error.details[0].message);
-  }
-
-  try {
-    // Check user credentials with Firebase authentication
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    // The user is logged in
-    req.session.user = { email: userCredential.user.email };
-    res.status(200).json({ message: 'Success' });
-  } catch (error) {
-    console.log(error);
-    res.status(401).json({ message: 'Invalid email or password' });
-  }
-});
-
-// Home view
-app.get('/', (req, res) => {
-  if (req.session.user) {
-    // User is logged in, show logout link
-    res.render('index', { loggedIn: true, user: req.session.user });
-  } else {
-    // User is not logged in, show login link
-    res.render('index', { loggedIn: false });
-  }
-});
-
-// Login view
-app.get('/login', (req, res) => {
-  // Check if user is already logged in
-  if (req.session.user) {
-    res.redirect('/protected');
-  } else {
-    // Generate a new CSRF token and store it in the session
-    const csrfToken = uuid();
-    req.session.csrfToken = csrfToken;
-
-    // Render the login page with the CSRF token as a cookie
-    res.cookie('csrfToken', csrfToken, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
-    res.render('login');
-  }
-});
-
-// Login route
-app.post('/login', (req, res) => {
-  if (req.body.csrfToken !== req.session.csrfToken) {
-    res.status(403).send('CSRF token mismatch');
-    return;
-  }
-  // Validate request body
-  const { error, value } = schema.validate(req.body);
-  if (error) {
-    res.status(400).send(`Validation error: ${error.message}`);
-    return;
-  }
-  // Check user credentials
-  const { email, password } = value;
-  if (email === 'user@mail.com' && password === 'pass') {
-    // Store user info in session
-    // Store user data in session
-    req.session.user = { id: user.id, email: user.email };
-    res.redirect('/protected');
-  } else {
-    res.send('Login failed');
-  }
-});
-
-// Protected route
-app.get('/protected', (req, res) => {
-  // Check if user is logged in and session fingerprint matches
-  if (
-    req.session.user &&
-    req.session.fingerprint.ip === req.ip &&
-    req.session.fingerprint.userAgent === req.headers['user-agent']
-  ) {
-    res.render('protected', { user: req.session.user });
-  } else {
-    res.redirect('/login');
-  }
-});
-
-// Logout route
-app.get('/logout', (req, res) => {
-  // Destroy session
-  req.session.destroy();
-  res.redirect('/');
-});
+app.post('/logout', handleLogout);
+app.post('/forgot-password', handleForgottenPassword);
+app.post('/signup', handleRegistration);
+app.post('/login', handleLogin);
 
 export default app;

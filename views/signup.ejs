@@ -43,6 +43,11 @@
     </style>
   </head>
   <body>
+     <div>
+      <% if (error) { %>
+      <p style="color: red"><%= error %></p>
+      <% } %>
+    </div>
     <form id="signup-form">
       <label for="email">Email:</label>
       <input type="email" id="email" name="email" required />
