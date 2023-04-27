@@ -1,9 +1,38 @@
 import express from 'express';
 import session from 'express-session';
+import dotenv from 'dotenv';
+import 'firebase/database'; // Import additional Firebase services if needed
+import { initializeApp } from 'firebase/app';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
+
+import rateLimit from 'express-rate-limit';
+import Joi from 'joi';
 import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
 import { v4 as uuid } from 'uuid';
 import config from '../config/config.js';
+dotenv.config();
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+});
+
+const firebaseConfig = {
+  apiKey: process.env.API_KEY,
+  authDomain: process.env.AUTH_DOMAIN,
+  projectId: process.env.PROJECT_ID,
+  storageBucket: process.env.STORAGE_BUCKET,
+  messagingSenderId: process.env.MESSAGING_SENDER_ID,
+  appId: process.env.APP_ID,
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+export const auth = getAuth(firebaseApp);
 
 const app = express();
 app.use(express.json());
@@ -12,6 +41,8 @@ const { paths, viewEngine } = config;
 app.set('views', paths.views);
 app.set('view engine', viewEngine);
 app.use(express.static(paths.public));
+// Apply the rate limiter to all routes
+app.use(limiter);
 const redisClient = createClient();
 redisClient.connect().catch(console.error);
 
@@ -66,7 +97,7 @@ app.use(
 );
 
 // Session fingerprinting middleware
-app.use(function (req, res, next) {
+app.use(function (req, r_, next) {
   if (!req.session.fingerprint) {
     req.session.fingerprint = {
       ip: req.ip,
@@ -76,16 +107,58 @@ app.use(function (req, res, next) {
   next();
 });
 
-// Login route
-app.post('/login', (req, res) => {
-  // Check user credentials
-  console.log(req.body);
-  if (req.body.username === 'user' && req.body.password === 'pass') {
-    // Store user info in session
-    req.session.user = { username: 'user' };
+// Define validation schema
+const schema = Joi.object({
+  username: Joi.string().required(),
+  password: Joi.string().required(),
+});
+// signup route
+app.get('/signup', (req, res) => {
+  res.render('signup');
+});
+
+// Route for creating a new user
+app.post('/signup', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    // The user is signed up
+    console.log(userCredential.user);
+    req.session.user = { email: userCredential.user.email };
     res.redirect('/protected');
-  } else {
-    res.send('Login failed');
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error' });
+  }
+});
+
+// Route for logging in a user
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const { error } = schema.validate(req.body);
+
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+
+  try {
+    // Check user credentials with Firebase authentication
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    // The user is logged in
+    req.session.user = { email: userCredential.user.email };
+    res.status(200).json({ message: 'Success' });
+  } catch (error) {
+    console.log(error);
+    res.status(401).json({ message: 'Invalid email or password' });
   }
 });
 
@@ -106,17 +179,38 @@ app.get('/login', (req, res) => {
   if (req.session.user) {
     res.redirect('/protected');
   } else {
+    // Generate a new CSRF token and store it in the session
+    const csrfToken = uuid();
+    req.session.csrfToken = csrfToken;
+
+    // Render the login page with the CSRF token as a cookie
+    res.cookie('csrfToken', csrfToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
     res.render('login');
   }
 });
 
 // Login route
 app.post('/login', (req, res) => {
+  if (req.body.csrfToken !== req.session.csrfToken) {
+    res.status(403).send('CSRF token mismatch');
+    return;
+  }
+  // Validate request body
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    res.status(400).send(`Validation error: ${error.message}`);
+    return;
+  }
   // Check user credentials
-  console.log(req.body);
-  if (req.body.username === 'user' && req.body.password === 'pass') {
+  const { username, password } = value;
+  if (username === 'user' && password === 'pass') {
     // Store user info in session
-    req.session.user = { username: 'user' };
+    // Store user data in session
+    req.session.user = { id: user.id, username: user.username };
     res.redirect('/');
   } else {
     res.send('Login failed');
