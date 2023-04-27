@@ -1,3 +1,5 @@
+<!-- /views/login.ejs -->
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -5,15 +7,26 @@
     <title>Login</title>
     <style>
       /* Add basic styles to form container */
+      body {
+        display: flex;
+        justify-content: center;
+      }
+      #form-container {
+        width: 50%;
+      }
       form {
         display: flex;
         flex-direction: column;
         align-items: center;
         margin-top: 50px;
+        border: 1px solid #ccc; /* add border to form element */
+        padding: 20px; /* add some padding for spacing */
+        max-width: 500px; /* set a maximum width for the form */
+        margin: 0 auto; /* center the form horizontally */
       }
 
       /* Add basic styles to inputs */
-      input[type='text'],
+      input[type='email'],
       input[type='password'] {
         padding: 10px;
         margin-bottom: 10px;
@@ -28,13 +41,12 @@
         background-color: #4caf50;
         color: white;
         padding: 10px;
-        border: none;
+        border: 1px solid #4caf50; /* add border to button */
         border-radius: 5px;
         cursor: pointer;
-        width: 100%;
+        width: auto; /* remove width: 100% */
         box-sizing: border-box;
       }
-
       /* Add basic styles to error message */
       p {
         color: red;
@@ -43,28 +55,26 @@
     </style>
   </head>
   <body>
-     <div>
+    <div>
       <% if (error) { %>
       <p style="color: red"><%= error %></p>
       <% } %>
     </div>
-    <h1>Login</h1>
-    <form id="login-form">
-      <label for="email">
-        Email:
-        <input type="email" name="email" id="email" required />
-      </label>
-      <br />
-      <label for="password">
-        Password:
-        <input type="password" name="password" id="password" required />
-      </label>
-      <br />
-      <button type="submit" id="button">Login</button>
+    <div id="form-container">
+      <form id="form" novalidate>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required />
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required />
+
+        <button type="submit" id="button">Sign up</button>
+      </form>
       <a href="/forgot-password">forgot password?</a>
-    </form>
+      <a href="/signup">signup</a>
+    </div>
     <script>
-      const form = document.getElementById('login-form');
+      const form = document.getElementById('form');
 
       form.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -72,6 +82,24 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const button = document.getElementById('button');
+        const formContainer = document.getElementById('form-container');
+
+        // Client-side validation
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+          const errorElement = document.createElement('p');
+          errorElement.textContent = 'Email is not valid.';
+          formContainer.appendChild(errorElement);
+          return;
+        }
+
+        if (password.length < 6) {
+          const errorElement = document.createElement('p');
+          errorElement.textContent =
+            'Password must be at least 6 characters long.';
+          formContainer.appendChild(errorElement);
+          return;
+        }
 
         button.disabled = true; // Disable the button on submission
 
@@ -84,15 +112,16 @@
         })
           .then((response) => {
             if (response.ok) {
-              // Redirect to /protected
+              console.log('Success');
               window.location.href = '/protected';
             } else {
-              return response.text();
+              return response.json().then((data) => {
+                console.log(data.error);
+                const errorElement = document.createElement('p');
+                errorElement.textContent = data.error;
+                form.appendChild(errorElement);
+              });
             }
-          })
-          .then((errorMessage) => {
-            const errorContainer = document.querySelector('#login-form p');
-            errorContainer.textContent = errorMessage;
           })
           .catch((error) => console.error(error))
           .finally(() => {

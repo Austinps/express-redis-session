@@ -30,17 +30,21 @@ export const handleForgottenPassword = async (req, res) => {
 };
 
 export const handleRegistration = async (req, res) => {
-  const { email, password } = req.body;
+  const { error, value } = schema.validate(req.body);
+  const { email, password } = value;
+
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
 
   try {
     // Check if user already exists
     const signInMethods = await fetchSignInMethodsForEmail(auth, email);
     console.log(signInMethods);
     if (signInMethods.length > 0) {
-      return res.redirect(
-        '/signup?error=' + encodeURIComponent('user already exists')
-      );
+      return res.status(400).json({ error: 'User already exists' });
     }
+
     // Create new user
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -53,10 +57,7 @@ export const handleRegistration = async (req, res) => {
     res.status(200).json({ message: 'Success' });
   } catch (error) {
     console.log(error);
-    // Set the error message in the session
-    req.session.errorMessage = 'Error';
-    // Redirect to the signup page with an error message
-    res.redirect('/signup?error=' + encodeURIComponent('Error'));
+    res.status(400).json({ error: 'Error creating user' });
   }
 };
 
