@@ -46,7 +46,7 @@ export const renderProtected = (req, res) => {
     req.session.fingerprint.ip === req.ip &&
     req.session.fingerprint.userAgent === req.headers['user-agent']
   ) {
-    res.render('protected', { user: req.session.user });
+    res.render('protected', { user: req.session.user, isChecked: true });
   } else {
     res.redirect('/login');
   }

@@ -42,8 +42,30 @@
     <p><%= message %></p>
     <% } %>
     <p>Hello, <%= user.email %></p>
+    <form id="checkbox-form" action="/update-checkbox" method="POST">
+      <input type="checkbox" id="checkbox" name="isChecked" />
+      <label for="checkbox">Check this box</label>
+      <br />
+      <button type="submit">Submit</button>
+    </form>
     <form action="/logout" method="POST">
       <button type="submit">Logout</button>
     </form>
   </body>
+  <script>
+    const checkbox = document.getElementById('checkbox');
+    checkbox.checked = '<%= isChecked %>' === 'true';
+    const form = document.getElementById('checkbox-form');
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      fetch('/update-checkbox', {
+        method: 'POST',
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => console.log(data))
+        .catch((error) => console.error(error));
+    });
+  </script>
 </html>

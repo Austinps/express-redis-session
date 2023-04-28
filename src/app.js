@@ -104,7 +104,6 @@ app.use(function (req, r_, next) {
   next();
 });
 
-
 app.get('/forgot-password', renderForgotPassword);
 
 app.get('/forgot-password-success', renderForgotPasswordSuccess);
@@ -117,5 +116,26 @@ app.post('/logout', handleLogout);
 app.post('/forgot-password', handleForgottenPassword);
 app.post('/signup', handleRegistration);
 app.post('/login', handleLogin);
+
+app.post('/update-checkbox', (req, res) => {
+  const { user } = req.session;
+  const checkboxState = req.body.checkboxState;
+  // Save the checkbox state
+  // Your code here
+
+  if (!user) {
+    return res.redirect('/login');
+  }
+
+  if (!checkboxState) {
+    return res.render('protected', {
+      user,
+      message: 'Please accept the terms and conditions.',
+    });
+  }
+
+  // Render the protected page
+  res.redirect('/protected');
+});
 
 export default app;
