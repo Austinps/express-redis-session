@@ -11,18 +11,12 @@ import { v4 as uuid } from 'uuid';
 import config from '../config/config.js';
 import {
   handleForgottenPassword,
-  handleLogin,
   handleLogout,
-  handleRegistration,
 } from './controllers/authController.js';
-import {
-  renderForgotPassword,
-  renderForgotPasswordSuccess,
-  renderHome,
-  renderLogin,
-  renderProtected,
-  renderRegistration,
-} from './controllers/viewController.js';
+
+import authRouter from './routes/authRouter.js';
+import viewRouter from './routes/viewRouter.jsS';
+
 dotenv.config();
 
 const limiter = rateLimit({
@@ -104,18 +98,10 @@ app.use(function (req, r_, next) {
   next();
 });
 
-app.get('/forgot-password', renderForgotPassword);
-
-app.get('/forgot-password-success', renderForgotPasswordSuccess);
-app.get('/signup', renderRegistration);
-app.get('/', renderHome);
-app.get('/login', renderLogin);
-app.get('/protected', renderProtected);
-
 app.post('/logout', handleLogout);
 app.post('/forgot-password', handleForgottenPassword);
-app.post('/signup', handleRegistration);
-app.post('/login', handleLogin);
+app.use('/view', viewRouter);
+app.use('/auth', authRouter);
 
 app.post('/update-checkbox', (req, res) => {
   const { user } = req.session;
