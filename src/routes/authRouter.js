@@ -12,5 +12,7 @@ const router = Router();
 
 router.post('/login', handleLogin);
 router.post('/signup', handleRegistration);
+app.post('/logout', handleLogout);
+app.post('/forgot-password', handleForgottenPassword);
 
 export default router;

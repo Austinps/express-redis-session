@@ -9,13 +9,10 @@ import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
 import { v4 as uuid } from 'uuid';
 import config from '../config/config.js';
-import {
-  handleForgottenPassword,
-  handleLogout,
-} from './controllers/authController.js';
 
 import authRouter from './routes/authRouter.js';
-import viewRouter from './routes/viewRouter.jsS';
+import viewRouter from './routes/viewRouter.js';
+import updateRouter from './routes/updateRouter.js';
 
 dotenv.config();
 
@@ -98,30 +95,10 @@ app.use(function (req, r_, next) {
   next();
 });
 
-app.post('/logout', handleLogout);
-app.post('/forgot-password', handleForgottenPassword);
 app.use('/view', viewRouter);
 app.use('/auth', authRouter);
+app.use('/update', updateRouter);
 
-app.post('/update-checkbox', (req, res) => {
-  const { user } = req.session;
-  const checkboxState = req.body.checkboxState;
-  // Save the checkbox state
-  // Your code here
 
-  if (!user) {
-    return res.redirect('/login');
-  }
-
-  if (!checkboxState) {
-    return res.render('protected', {
-      user,
-      message: 'Please accept the terms and conditions.',
-    });
-  }
-
-  // Render the protected page
-  res.redirect('/protected');
-});
 
 export default app;
