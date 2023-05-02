@@ -1,3 +1,5 @@
+// src/app.js
+
 import express from 'express';
 import session from 'express-session';
 import dotenv from 'dotenv';
@@ -98,7 +100,5 @@ app.use(function (req, r_, next) {
 app.use('/view', viewRouter);
 app.use('/auth', authRouter);
 app.use('/update', updateRouter);
-
-
 
 export default app;

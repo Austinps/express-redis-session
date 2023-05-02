@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "test": "ava"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,10 @@
     "joi": "^17.9.2",
     "morgan": "^1.10.0",
     "redis": "^4.6.5",
+    "supertest": "^6.3.3",
     "uuidv4": "^6.2.13"
+  },
+  "devDependencies": {
+    "ava": "^5.2.0"
   }
 }

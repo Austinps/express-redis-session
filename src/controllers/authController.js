@@ -1,3 +1,5 @@
+// /src/controllers/authController.js
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,

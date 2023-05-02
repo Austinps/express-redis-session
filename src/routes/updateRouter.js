@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 const router = Router();
 
-app.post('/toggle-checkbox', (req, res) => {
+router.post('/toggle-checkbox', (req, res) => {
   const { user } = req.session;
   const checkboxState = req.body.checkboxState;
   // Save the checkbox state

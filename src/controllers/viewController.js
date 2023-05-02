@@ -1,3 +1,5 @@
+// /src/controllers/viewController.js
+
 export const renderForgotPassword = async (req, res) => {
   const errorMessage = req.session.errorMessage;
   const userNotFound = req.session.userNotFound;

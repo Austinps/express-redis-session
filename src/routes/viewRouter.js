@@ -1,3 +1,5 @@
+// /src/routes/viewRouter.js
+
 import { Router } from 'express';
 import {
   renderForgotPassword,
@@ -10,12 +12,12 @@ import {
 
 const router = Router();
 
-app.get('/forgot-password', renderForgotPassword);
+router.get('/forgot-password', renderForgotPassword);
 
-app.get('/forgot-password-success', renderForgotPasswordSuccess);
-app.get('/signup', renderRegistration);
-app.get('/', renderHome);
-app.get('/login', renderLogin);
-app.get('/protected', renderProtected);
+router.get('/forgot-password-success', renderForgotPasswordSuccess);
+router.get('/signup', renderRegistration);
+router.get('/', renderHome);
+router.get('/login', renderLogin);
+router.get('/protected', renderProtected);
 
 export default router;
