@@ -14,20 +14,28 @@ This project is an implementation exercise showcasing user session management be
 Node.js
 Redis server
 Firebase account
-Installation
-Clone the repository:
-bash
 
+## Installation
+
+Clone the repository:
 git clone https://github.com/<USERNAME>/<REPO-NAME>.git
 
 Create a .env file with the following variables:
-makefile
 
-API_KEY=<YOUR_FIREBASE_API_KEY>
-AUTH_DOMAIN=<YOUR_FIREBASE_AUTH_DOMAIN>
-PROJECT_ID=<YOUR_FIREBASE_PROJECT_ID>
-STORAGE_BUCKET=<YOUR_FIREBASE_STORAGE_BUCKET>
-MESSAGING_SENDER_ID=<YOUR_FIREBASE_MESSAGING_SENDER_ID>
-APP_ID=<YOUR_FIREBASE_APP_ID>
+- API_KEY=<YOUR_FIREBASE_API_KEY>
+- AUTH_DOMAIN=<YOUR_FIREBASE_AUTH_DOMAIN>
+- PROJECT_ID=<YOUR_FIREBASE_PROJECT_ID>
+- STORAGE_BUCKET=<YOUR_FIREBASE_STORAGE_BUCKET>
+- MESSAGING_SENDER_ID=<YOUR_FIREBASE_MESSAGING_SENDER_ID>
+- APP_ID=<YOUR_FIREBASE_APP_ID>
 
+Run development server:
 npm run dev
+
+## License
+
+This project is licensed under the ISC License - see the LICENSE file for details.
+
+## Contributing
+
+Contributions are always welcome! If you would like to contribute to this project, please create a pull request.
